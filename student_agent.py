@@ -31,6 +31,8 @@ def init_model():
             approximator.weights = pickle.load(f)
 
 def get_action(state, score):
+    init_model()
+    
     env = Game2048Env()
     env.board = state.copy() 
     env.score = score
