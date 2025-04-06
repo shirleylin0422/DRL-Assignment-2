@@ -18,7 +18,7 @@ from TD_MCTS import TD_MCTS, TD_MCTS_Node
 
 patterns = get_patterns()
 approximator = NTupleApproximator(board_size=4, patterns=patterns)
-with open("train_file/td_learning/td_table_episode_5000.pkl", "rb") as f:
+with open("train_file/td_learning/td_table_episode_1000.pkl", "rb") as f:
     approximator.weights = pickle.load(f)
 
 
