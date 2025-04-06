@@ -19,6 +19,7 @@ from n_tuple_design import get_patterns
 from TD_MCTS import TD_MCTS, TD_MCTS_Node
 
 patterns = get_patterns()
+approximator = None
 # approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
 def init_model():
