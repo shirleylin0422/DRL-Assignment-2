@@ -2,6 +2,7 @@ import copy
 import random
 import math
 import numpy as np
+from Game2048Env import Game2048Env
 
 # Note: This MCTS implementation is almost identical to the previous one,
 # except for the rollout phase, which now incorporates the approximator.
@@ -23,7 +24,7 @@ class TD_MCTS_Node:
         self.visits = 0
         self.total_reward = 0.0
         # List of untried actions based on the current state's legal moves
-        self.untried_actions = [a for a in range(4) if env.is_move_legal(a)]
+        self.untried_actions = [a for a in range(4) if Game2048Env.is_move_legal(a)]
 
     def fully_expanded(self):
         # A node is fully expanded if no legal actions remain untried.
@@ -128,37 +129,45 @@ class TD_MCTS:
 
 
 
-from Game2048Env import Game2048Env
+
 from td_learning import NTupleApproximator
 import pickle
 from n_tuple_design import get_patterns
 
-patterns = get_patterns()
-env = Game2048Env()
-approximator = NTupleApproximator(board_size=4, patterns=patterns)
-with open("train_file/td_learning/td_table_episode_5000.pkl", "rb") as f:
-    approximator.weights = pickle.load(f)
+def main():
 
-td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=1.41, rollout_depth=10, gamma=0.99)
+    
+    env = Game2048Env()
+    patterns = get_patterns()
+    approximator = NTupleApproximator(board_size=4, patterns=patterns)
+    with open("train_file/td_learning/td_table_episode_5000.pkl", "rb") as f:
+        approximator.weights = pickle.load(f)
 
-state = env.reset()
-env.render()
+    td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=1.41, rollout_depth=10, gamma=0.99)
 
-done = False
-while not done:
-    # Create the root node from the current state
-    root = TD_MCTS_Node(state, env.score)
+    state = env.reset()
+    env.render()
 
-    # Run multiple simulations to build the MCTS tree
-    for _ in range(td_mcts.iterations):
-        td_mcts.run_simulation(root)
+    done = False
+    while not done:
+        # Create the root node from the current state
+        root = TD_MCTS_Node(state, env.score)
 
-    # Select the best action (based on highest visit count)
-    best_act, _ = td_mcts.best_action_distribution(root)
-    print("TD-MCTS selected action:", best_act)
+        # Run multiple simulations to build the MCTS tree
+        for _ in range(td_mcts.iterations):
+            td_mcts.run_simulation(root)
 
-    # Execute the selected action and update the state
-    state, reward, done, _ = env.step(best_act)
-    env.render(action=best_act)
+        # Select the best action (based on highest visit count)
+        best_act, _ = td_mcts.best_action_distribution(root)
+        print("TD-MCTS selected action:", best_act)
 
-print("Game over, final score:", env.score)
+        # Execute the selected action and update the state
+        state, reward, done, _ = env.step(best_act)
+        # env.render(action=best_act)
+        print("best_act", best_act)
+        print("reward", reward)
+
+    print("Game over, final score:", env.score)
+
+if __name__ == '__main__':
+    main()

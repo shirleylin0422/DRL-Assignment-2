@@ -186,24 +186,28 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
 from n_tuple_design import get_patterns
 
 
-patterns = get_patterns()
+def main():
+    patterns = get_patterns()
 
 
-approximator = NTupleApproximator(board_size=4, patterns=patterns)
+    approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
-env = Game2048Env()
+    env = Game2048Env()
 
-# Run TD-Learning training
-# Note: To achieve significantly better performance, you will likely need to train for over 100,000 episodes.
-# However, to quickly verify that your implementation is working correctly, you can start by running it for 1,000 episodes before scaling up.
-final_scores = td_learning(env, approximator, num_episodes=5000, alpha=0.05, gamma=0.99)
-window = 100
-moving_avg = [np.mean(final_scores[i:i+window]) for i in range(len(final_scores)-window+1)]
-plt.figure(figsize=(10, 5))
-plt.plot(range(window-1, len(final_scores)), moving_avg, label="Moving Average Score")
-plt.xlabel("Episode")
-plt.ylabel("Final Score")
-plt.title("Training Progression: Episode vs. Final Score")
-plt.legend()
-plt.grid(True)
-plt.show()
+    # Run TD-Learning training
+    # Note: To achieve significantly better performance, you will likely need to train for over 100,000 episodes.
+    # However, to quickly verify that your implementation is working correctly, you can start by running it for 1,000 episodes before scaling up.
+    final_scores = td_learning(env, approximator, num_episodes=5000, alpha=0.05, gamma=0.99)
+    window = 100
+    moving_avg = [np.mean(final_scores[i:i+window]) for i in range(len(final_scores)-window+1)]
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(window-1, len(final_scores)), moving_avg, label="Moving Average Score")
+    plt.xlabel("Episode")
+    plt.ylabel("Final Score")
+    plt.title("Training Progression: Episode vs. Final Score")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+if __name__ == '__main__':
+    main()
