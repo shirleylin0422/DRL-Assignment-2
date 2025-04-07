@@ -32,5 +32,6 @@ jobs:
       run: chmod +x env.cpython-38-x86_64-linux-gnu.so
 
     - name: 4. Run Evaluation
-      run:  gdown --fuzzy https://drive.google.com/uc?id=1-Z1UqnzMdLsk0f-xdILB1LV_jNsxD5RR -O ./train_file/td_learning_afterstate/td_table_episode_5000_fix.pkl
-      run: python eval.py --token a91aae52cff9ef65932db06b150ffd47
+      run: |
+        gdown --fuzzy https://drive.google.com/uc?id=1-Z1UqnzMdLsk0f-xdILB1LV_jNsxD5RR -O ./train_file/td_learning_afterstate/td_table_episode_5000_fix.pkl
+        python eval.py --token a91aae52cff9ef65932db06b150ffd47
