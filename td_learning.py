@@ -6,6 +6,7 @@ from collections import defaultdict
 import pickle
 import matplotlib.pyplot as plt
 from Game2048Env import Game2048Env
+from tqdm import tqdm
 
 # -------------------------------
 # TODO: Define transformation functions (rotation and reflection), i.e., rot90, rot180, ..., etc.
@@ -108,10 +109,11 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
     final_scores = []
     success_flags = []
 
-    for episode in range(num_episodes):
+    for episode in tqdm(range(num_episodes), desc="Training Episodes"):
         state = env.reset()
         trajectory = []  # Store trajectory data if needed
         previous_score = 0
+        pre_score = 0
         done = False
         max_tile = np.max(state)
 
@@ -130,53 +132,52 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
             best_action = None
             for a in legal_moves:
                 env_copy = copy.deepcopy(env)
-                next_state, score_inc, done_flag, _ = env_copy.step(a)
-                v_next = approximator.value(next_state)
-                if v_next > best_value:
-                    best_value = v_next
+                next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
+                reward = score_inc - pre_score
+                pre_score = score_inc
+                v_after = approximator.value(afterstate)
+                val = reward + v_after
+                if val > best_value:
+                    best_value = val
                     best_action = a
             action = best_action if best_action is not None else random.choice(legal_moves)
+            
+            """
+            Afterstate
+            """
 
-
-
-            next_state, new_score, done, _ = env.step(action)
+            next_state, new_score, done, _, afterstate = env.step(action)
             incremental_reward = new_score - previous_score
             previous_score = new_score
             max_tile = max(max_tile, np.max(next_state))
 
 
             # TODO: Store trajectory or just update depending on the implementation
-            # v_next = approximator.value(next_state) if not done else 0.0
-
-            # td_error = incremental_reward + gamma * v_next - v_current
-            # approximator.update(state, td_error, alpha)
-
-
-            # state = next_state
-            # v_current = approximator.value(state)
-            trajectory.append((state.copy(), incremental_reward))
+            trajectory.append((incremental_reward, afterstate.copy()))
             state = next_state
 
         # TODO: If you are storing the trajectory, consider updating it now depending on your implementation.
         v_next = 0.0
-        for s, reward in reversed(trajectory):
-            v_current = approximator.value(s)
+        for reward, s_after in reversed(trajectory):
+            v_current = approximator.value(s_after)
             td_error = reward + gamma * v_next - v_current
-            approximator.update(s, td_error, alpha)
+            approximator.update(s_after, td_error, alpha)
             v_next = v_current
 
         final_scores.append(env.score)
         success_flags.append(1 if max_tile >= 2048 else 0)
 
-        if (episode + 1) % 1000 == 0:
-            filename = f"train_file/td_learning/td_table_episode_{episode+1}.pkl"
-            with open(filename, "wb") as f:
-                pickle.dump(approximator.weights, f)
-            print(f"Saved td-table to {filename}")
-
+        if (episode + 1) % 100 == 0:
             avg_score = np.mean(final_scores[-100:])
             success_rate = np.sum(success_flags[-100:]) / 100
             print(f"Episode {episode+1}/{num_episodes} | Avg Score: {avg_score:.2f} | Success Rate: {success_rate:.2f}")
+            if (episode + 1) % 1000 == 0:
+                filename = f"train_file/td_learning_afterstate/td_table_episode_{episode+1}.pkl"
+                with open(filename, "wb") as f:
+                    pickle.dump(approximator.weights, f)
+                print(f"Saved td-table to {filename}")
+
+        
 
     return final_scores
 

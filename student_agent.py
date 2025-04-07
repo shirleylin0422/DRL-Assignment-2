@@ -46,7 +46,7 @@ def get_action(state, score):
 
     for a in legal_moves:
         env_copy = copy.deepcopy(env)
-        next_state, score_inc, done_flag, _ = env_copy.step(a)
+        next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
         v_next = approximator.value(next_state)
         if v_next > best_value:
             best_value = v_next
