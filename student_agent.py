@@ -20,10 +20,12 @@ from TD_MCTS import TD_MCTS, TD_MCTS_Node
 
 
 approximator = None
+pre_score = 0
 # approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
 def init_model():
     global approximator
+    global pre_score
     if approximator is None:
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
@@ -47,9 +49,12 @@ def get_action(state, score):
     for a in legal_moves:
         env_copy = copy.deepcopy(env)
         next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
-        v_next = approximator.value(next_state)
-        if v_next > best_value:
-            best_value = v_next
+        reward = score_inc - pre_score
+        pre_score = score_inc
+        v_after = approximator.value(afterstate)
+        val = reward + v_after
+        if val > best_value:
+            best_value = val
             best_action = a
 
     return best_action
