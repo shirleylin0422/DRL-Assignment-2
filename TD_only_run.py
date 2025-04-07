@@ -17,7 +17,6 @@ def main():
     with open("train_file/td_learning_afterstate/td_table_episode_5000.pkl", "rb") as f:
         approximator.weights = pickle.load(f)
 
-  
     state = env.reset()
     env.render()
     pre_score = 0
@@ -34,8 +33,8 @@ def main():
         for a in legal_moves:
             env_copy = copy.deepcopy(env)
             next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
-            reward = score_inc - pre_score
-            pre_score = score_inc
+            reward = score_inc - env.score
+            # pre_score = score_inc
             v_after = approximator.value(afterstate)
             val = reward + v_after
 

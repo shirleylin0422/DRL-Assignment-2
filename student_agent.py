@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import copy
 import random
 import gc
-
+import gdown
 
 
 
@@ -28,7 +28,13 @@ def init_model():
     if approximator is None:
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
-        with open("train_file/td_learning_afterstate/td_table_episode_5000.pkl", "rb") as f:
+        path = "train_file/td_learning_afterstate/td_table_episode_5000_fix.pkl"
+        gdown.download(
+            url="https://drive.google.com/uc?id=1-Z1UqnzMdLsk0f-xdILB1LV_jNsxD5RR",
+            output=path,
+            quiet=False
+        )
+        with open(path, "rb") as f:
             approximator.weights = pickle.load(f)
 
 """TD approximator only"""
@@ -49,8 +55,7 @@ def get_action(state, score):
     for a in legal_moves:
         env_copy = copy.deepcopy(env)
         next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
-        reward = score_inc - pre_score
-        pre_score = score_inc
+        reward = score_inc - score
         v_after = approximator.value(afterstate)
         val = reward + v_after
         if val > best_value:

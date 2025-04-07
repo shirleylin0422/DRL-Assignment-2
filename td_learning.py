@@ -26,11 +26,11 @@ class NTupleApproximator:
         # Create a weight dictionary for each pattern (shared within a pattern group)
         # self.weights = [defaultdict(float) for _ in patterns]
         # Generate symmetrical transformations for each pattern
+        self.weights = [defaultdict(float) for _ in self.patterns]
         self.pattern_groups = []
         for pattern in self.patterns:
             syms = self.generate_symmetries(pattern)
             self.pattern_groups.append(syms)
-        self.weights = [defaultdict(float) for _ in self.pattern_groups]
 
     def generate_symmetries(self, pattern):
         # TODO: Generate 8 symmetrical transformations of the given pattern.
@@ -87,6 +87,7 @@ class NTupleApproximator:
             eval += group_value
         return eval
 
+
     def update(self, board, delta, alpha):
         # TODO: Update weights based on the TD error.
         for group, weight_dict in zip(self.pattern_groups, self.weights):
@@ -112,12 +113,9 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
     for episode in tqdm(range(num_episodes), desc="Training Episodes"):
         state = env.reset()
         trajectory = []  # Store trajectory data if needed
-        previous_score = 0
-        pre_score = 0
+        previous_score = env.score
         done = False
         max_tile = np.max(state)
-
-        v_current = approximator.value(state)
 
         while not done:
             legal_moves = [a for a in range(4) if env.is_move_legal(a)]
@@ -133,8 +131,7 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
             for a in legal_moves:
                 env_copy = copy.deepcopy(env)
                 next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
-                reward = score_inc - pre_score
-                pre_score = score_inc
+                reward = score_inc - previous_score
                 v_after = approximator.value(afterstate)
                 val = reward + v_after
                 if val > best_value:
@@ -143,26 +140,54 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
             action = best_action if best_action is not None else random.choice(legal_moves)
             
             """
-            Afterstate
+                afterstate s'
+                v_after V(s')
+                reward R(s, a)
             """
 
             next_state, new_score, done, _, afterstate = env.step(action)
-            incremental_reward = new_score - previous_score
-            previous_score = new_score
+            reward = new_score - previous_score
+            previous_score = score_inc
             max_tile = max(max_tile, np.max(next_state))
 
+            """
+                next_afterstate s''
+                next_v_after V(s'')
+                next_reward R(s', a')
+            """
+            legal_moves = [a for a in range(4) if env.is_move_legal(a)]
+            if not legal_moves:
+                break
 
+            next_best_value = -float('inf')
+            next_best_reward = 0
+            for a in legal_moves:
+                env_copy = copy.deepcopy(env)
+                next_next_state, score_inc, done_flag, _, next_afterstate = env_copy.step(a)
+                next_reward = score_inc - previous_score
+                next_v_after = approximator.value(next_afterstate)
+                val = next_reward + next_v_after
+                if val > next_best_value:
+                    next_best_value = val
+                    next_best_reward = next_reward
+                    next_best_v_after = next_v_after
+
+            
             # TODO: Store trajectory or just update depending on the implementation
-            trajectory.append((incremental_reward, afterstate.copy()))
+            trajectory.append((next_best_reward, next_best_v_after, afterstate.copy()))
             state = next_state
 
         # TODO: If you are storing the trajectory, consider updating it now depending on your implementation.
-        v_next = 0.0
-        for reward, s_after in reversed(trajectory):
-            v_current = approximator.value(s_after)
-            td_error = reward + gamma * v_next - v_current
-            approximator.update(s_after, td_error, alpha)
-            v_next = v_current
+
+        for reward, next_v_after, afterstate in reversed(trajectory):
+            """ 
+                V(s') <-  V(s') + alpha*td_error
+                TD_error = R(s', a') + V(s'') - V(s')
+            """
+            v_s_ = approximator.value(afterstate)
+            td_error = reward + gamma * next_v_after - v_s_
+            approximator.update(afterstate, td_error, alpha)
+
 
         final_scores.append(env.score)
         success_flags.append(1 if max_tile >= 2048 else 0)
@@ -198,7 +223,7 @@ def main():
     # Run TD-Learning training
     # Note: To achieve significantly better performance, you will likely need to train for over 100,000 episodes.
     # However, to quickly verify that your implementation is working correctly, you can start by running it for 1,000 episodes before scaling up.
-    final_scores = td_learning(env, approximator, num_episodes=5000, alpha=0.05, gamma=0.99)
+    final_scores = td_learning(env, approximator, num_episodes=20000, alpha=0.1, gamma=0.99)
     window = 100
     moving_avg = [np.mean(final_scores[i:i+window]) for i in range(len(final_scores)-window+1)]
     plt.figure(figsize=(10, 5))
