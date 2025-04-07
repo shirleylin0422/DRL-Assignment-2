@@ -24,8 +24,7 @@ pre_score = 0
 # approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
 def init_model():
-    global approximator
-    global pre_score
+    global approximator, pre_score
     if approximator is None:
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
