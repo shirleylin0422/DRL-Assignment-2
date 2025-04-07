@@ -8,8 +8,6 @@ import matplotlib.pyplot as plt
 import copy
 import random
 import gc
-import gdown
-
 
 
 from Game2048Env import Game2048Env
@@ -29,11 +27,7 @@ def init_model():
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
         path = "train_file/td_learning_afterstate/td_table_episode_5000_fix.pkl"
-        gdown.download(
-            url="https://drive.google.com/uc?id=1-Z1UqnzMdLsk0f-xdILB1LV_jNsxD5RR",
-            output=path,
-            quiet=False
-        )
+
         with open(path, "rb") as f:
             approximator.weights = pickle.load(f)
 
