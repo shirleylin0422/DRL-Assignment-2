@@ -24,7 +24,7 @@ pre_score = 0
 # approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
 def init_model():
-    global approximator, pre_score
+    global approximator
     if approximator is None:
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
@@ -35,6 +35,7 @@ def init_model():
 
 def get_action(state, score):
     init_model()
+    global pre_score
 
     env = Game2048Env()
     env.board = state.copy() 
