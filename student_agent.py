@@ -26,7 +26,7 @@ def init_model():
     if approximator is None:
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
-        path = "train_file/td_learning_afterstate/td_table_episode_5000_fix.pkl"
+        path = "train_file/td_learning_afterstate/td_table_episode_10000.pkl"
 
         with open(path, "rb") as f:
             approximator.weights = pickle.load(f)
@@ -48,7 +48,8 @@ def get_action(state, score):
 
     for a in legal_moves:
         env_copy = copy.deepcopy(env)
-        next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
+        # next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
+        afterstate, score_inc = env_copy.get_afterstate(a)
         reward = score_inc - score
         v_after = approximator.value(afterstate)
         val = reward + v_after

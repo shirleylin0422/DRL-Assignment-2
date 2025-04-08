@@ -34,5 +34,5 @@ jobs:
 
     - name: 4. Run Evaluation
       run: |
-        gdown --fuzzy https://drive.google.com/uc?id=1-Z1UqnzMdLsk0f-xdILB1LV_jNsxD5RR -O ./train_file/td_learning_afterstate/td_table_episode_5000_fix.pkl
+        gdown --fuzzy https://drive.google.com/file/d/1_jgyub2MEKswT_RBk_GniDyS3RIc7Bz3/view?usp=sharing -O ./train_file/td_learning_afterstate/td_table_episode_10000.pkl
         python eval.py --token a91aae52cff9ef65932db06b150ffd47

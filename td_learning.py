@@ -35,31 +35,38 @@ class NTupleApproximator:
     def generate_symmetries(self, pattern):
         # TODO: Generate 8 symmetrical transformations of the given pattern.
 
+        added = set ()
         syms = []
-        syms.append(tuple(sorted(pattern)))
+        def add_if_unique(p):
+            key = tuple(p) 
+            if key not in added:
+                added.add(key)
+                syms.append(p)
+
+        add_if_unique(pattern)
 
         rot90 = [(j, self.board_size - 1 - i) for (i, j) in pattern]
-        syms.append(tuple(sorted(rot90)))
+        add_if_unique(rot90)
 
         rot180 = [(self.board_size - 1 - i, self.board_size - 1 - j) for (i, j) in pattern]
-        syms.append(tuple(sorted(rot180)))
+        add_if_unique(rot180)
 
         rot270 = [(self.board_size - 1 - j, i) for (i, j) in pattern]
-        syms.append(tuple(sorted(rot270)))
+        add_if_unique(rot270)
 
         refl = [(i, self.board_size - 1 - j) for (i, j) in pattern]
-        syms.append(tuple(sorted(refl)))
+        add_if_unique(refl)
 
         refl_rot90 = [(j, self.board_size - 1 - i) for (i, j) in refl]
-        syms.append(tuple(sorted(refl_rot90)))
+        add_if_unique(refl_rot90)
 
         refl_rot180 = [(self.board_size - 1 - i, self.board_size - 1 - j) for (i, j) in refl]
-        syms.append(tuple(sorted(refl_rot180)))
+        add_if_unique(refl_rot180)
 
         refl_rot270 = [(self.board_size - 1 - j, i) for (i, j) in refl]
-        syms.append(tuple(sorted(refl_rot270)))
+        add_if_unique(refl_rot270)
 
-        return list(set(syms))
+        return syms
 
 
     def tile_to_index(self, tile):
@@ -130,7 +137,8 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
             best_action = None
             for a in legal_moves:
                 env_copy = copy.deepcopy(env)
-                next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
+                # next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
+                afterstate, score_inc = env_copy.get_afterstate(a)
                 reward = score_inc - previous_score
                 v_after = approximator.value(afterstate)
                 val = reward + v_after
@@ -147,7 +155,7 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
 
             next_state, new_score, done, _, afterstate = env.step(action)
             reward = new_score - previous_score
-            previous_score = score_inc
+            previous_score = new_score
             max_tile = max(max_tile, np.max(next_state))
 
             """
@@ -163,7 +171,8 @@ def td_learning(env, approximator, num_episodes=50000, alpha=0.01, gamma=0.99, e
             next_best_reward = 0
             for a in legal_moves:
                 env_copy = copy.deepcopy(env)
-                next_next_state, score_inc, done_flag, _, next_afterstate = env_copy.step(a)
+                # next_next_state, score_inc, done_flag, _, next_afterstate = env_copy.step(a)
+                next_afterstate, score_inc = env_copy.get_afterstate(a)
                 next_reward = score_inc - previous_score
                 next_v_after = approximator.value(next_afterstate)
                 val = next_reward + next_v_after
@@ -223,7 +232,7 @@ def main():
     # Run TD-Learning training
     # Note: To achieve significantly better performance, you will likely need to train for over 100,000 episodes.
     # However, to quickly verify that your implementation is working correctly, you can start by running it for 1,000 episodes before scaling up.
-    final_scores = td_learning(env, approximator, num_episodes=20000, alpha=0.1, gamma=0.99)
+    final_scores = td_learning(env, approximator, num_episodes=20000, alpha=0.1, gamma=1)
     window = 100
     moving_avg = [np.mean(final_scores[i:i+window]) for i in range(len(final_scores)-window+1)]
     plt.figure(figsize=(10, 5))

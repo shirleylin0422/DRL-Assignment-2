@@ -138,6 +138,19 @@ class Game2048Env(gym.Env):
 
         return True
 
+    def get_afterstate(self, action):
+        if action == 0:
+            moved = self.move_up()
+        elif action == 1:
+            moved = self.move_down()
+        elif action == 2:
+            moved = self.move_left()
+        elif action == 3:
+            moved = self.move_right()
+        else:
+            moved = False
+
+        return self.board, self.score
 
 
     def step(self, action):
