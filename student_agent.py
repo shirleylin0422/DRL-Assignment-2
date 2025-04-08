@@ -33,50 +33,55 @@ def init_model():
 
 """TD approximator only"""
 
-def get_action(state, score):
-    init_model()
-    global pre_score
-
-    env = Game2048Env()
-    env.board = state.copy() 
-    env.score = score
-    
-    legal_moves = [a for a in range(4) if env.is_move_legal(a)]
-
-    best_value = -float('inf')
-    best_action = None
-
-    for a in legal_moves:
-        env_copy = copy.deepcopy(env)
-        # next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
-        afterstate, score_inc = env_copy.get_afterstate(a)
-        reward = score_inc - score
-        v_after = approximator.value(afterstate)
-        val = reward + v_after
-        if val > best_value:
-            best_value = val
-            best_action = a
-
-    return best_action
-
-"""MCTS"""
-
 # def get_action(state, score):
+#     init_model()
+#     global pre_score
+
 #     env = Game2048Env()
 #     env.board = state.copy() 
 #     env.score = score
     
-#     root = TD_MCTS_Node(state, score)
-#     init_model()
-#     td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=1.41, rollout_depth=10, gamma=0.99)
-    
-    
-#     # Run multiple simulations to build the MCTS tree
-#     for _ in range(td_mcts.iterations):
-#         td_mcts.run_simulation(root)
+#     legal_moves = [a for a in range(4) if env.is_move_legal(a)]
 
-#     # Select the best action (based on highest visit count)
-#     best_act, _ = td_mcts.best_action_distribution(root)
+#     best_value = -float('inf')
+#     best_action = None
+
+#     for a in legal_moves:
+#         env_copy = copy.deepcopy(env)
+#         # next_state, score_inc, done_flag, _, afterstate = env_copy.step(a)
+#         afterstate, score_inc = env_copy.get_afterstate(a)
+#         reward = score_inc - score
+#         v_after = approximator.value(afterstate)
+#         val = reward + v_after
+#         if val > best_value:
+#             best_value = val
+#             best_action = a
+
+#     return best_action
+
+"""MCTS"""
+
+def get_action(state, score):
+    env = Game2048Env()
+    env.board = state.copy() 
+    env.score = score
     
-#     return best_act
+    root = TD_MCTS_Node(state, score)
+    init_model()
+    td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=1.41, rollout_depth=10, gamma=0.99)
+    
+    
+    # Run multiple simulations to build the MCTS tree
+    for _ in range(td_mcts.iterations):
+        td_mcts.run_simulation(root)
+
+    # Select the best action (based on highest visit count)
+    best_act, _ = td_mcts.best_action_distribution(root)
+    print("TD-MCTS selected action:", best_act)
+    state, reward, done, _, afterstate = env.step(best_act)
+    # env.render(action=best_act)
+    print("best_act", best_act)
+    print("reward", reward)
+    
+    return best_act
 

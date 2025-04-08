@@ -24,7 +24,10 @@ class TD_MCTS_Node:
         self.visits = 0
         self.total_reward = 0.0
         # List of untried actions based on the current state's legal moves
+
         env = Game2048Env()
+        env.board = state.copy()
+        env.score = score
         self.untried_actions = [a for a in range(4) if env.is_move_legal(a)]
 
     def fully_expanded(self):
@@ -65,21 +68,21 @@ class TD_MCTS:
     def rollout(self, sim_env, depth):
         # TODO: Perform a random rollout until reaching the maximum depth or a terminal state.
         # TODO: Use the approximator to evaluate the final state.
-        cumulative_reward = 0.0
-        current_depth = 0
-        done = False
-        while current_depth < depth and not done:
-            legal_moves = [action for action in range(4) if sim_env.is_move_legal(action)]
-            if not legal_moves:
-                break
-            action = random.choice(legal_moves)
-            state, reward, done, _ = sim_env.step(action)
-            cumulative_reward += reward
-            current_depth += 1
+        legal_moves = [a for a in range(4) if sim_env.is_move_legal(a)]
+        if not legal_moves:
+            return 0.0  # No legal moves → return 0
+        prev_score = sim_env.score
 
-        cumulative_reward += (self.gamma ** current_depth) * self.approximator.value(sim_env.board)
+        best_value = -float("inf")
+        for action in legal_moves:
+            env_copy = copy.deepcopy(sim_env)
+            afterstate, new_score = env_copy.get_afterstate(action)
+            reward = new_score - prev_score
+            value = reward + self.gamma * self.approximator.value(afterstate)
+            if value > best_value:
+                best_value = value
 
-        return cumulative_reward
+        return best_value
 
     def backpropagate(self, node, reward):
         # TODO: Propagate the reward up the tree, updating visit counts and total rewards.
@@ -95,7 +98,7 @@ class TD_MCTS:
         # TODO: Selection: Traverse the tree until reaching a non-fully expanded node.
         while node.fully_expanded() and node.children:
             node = self.select_child(node)
-            _, reward, done, _ = sim_env.step(node.action)
+            _, reward, done, _, afterstate = sim_env.step(node.action)
             if done:
                 break
 
@@ -103,7 +106,7 @@ class TD_MCTS:
         if node.untried_actions:
           action = random.choice(node.untried_actions)
           node.untried_actions.remove(action)
-          state, reward, done, _ = sim_env.step(action)
+          state, reward, done, _, afterstate = sim_env.step(action)
           child = TD_MCTS_Node(state, sim_env.score, parent=node, action=action)
           node.children[action] = child
           node = child

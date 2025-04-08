@@ -14,13 +14,13 @@ def main():
     env = Game2048Env()
     patterns = get_patterns()
     approximator = NTupleApproximator(board_size=4, patterns=patterns)
-    with open("train_file/td_learning/td_table_episode_5000.pkl", "rb") as f:
+    with open("train_file/td_learning_afterstate/td_table_episode_10000.pkl", "rb") as f:
         approximator.weights = pickle.load(f)
 
-    td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=1.41, rollout_depth=10, gamma=0.99)
+    td_mcts = TD_MCTS(env, approximator, iterations=50, exploration_constant=1.41, rollout_depth=0, gamma=0.99)
 
     state = env.reset()
-    env.render()
+    # env.render()
 
     done = False
     while not done:
@@ -36,7 +36,7 @@ def main():
         print("TD-MCTS selected action:", best_act)
 
         # Execute the selected action and update the state
-        state, reward, done, _ = env.step(best_act)
+        state, reward, done, _, afterstate = env.step(best_act)
         # env.render(action=best_act)
         print("best_act", best_act)
         print("reward", reward)
