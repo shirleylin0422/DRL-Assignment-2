@@ -26,7 +26,7 @@ def init_model():
     if approximator is None:
         gc.collect() 
         approximator = NTupleApproximator(board_size=4, patterns=get_patterns())
-        path = "train_file/td_learning_afterstate/td_table_episode_10000.pkl"
+        path = "train_file/td_learning_afterstate/td_table_episode_15000.pkl"
 
         with open(path, "rb") as f:
             approximator.weights = pickle.load(f)
@@ -77,11 +77,11 @@ def get_action(state, score):
 
     # Select the best action (based on highest visit count)
     best_act, _ = td_mcts.best_action_distribution(root)
-    print("TD-MCTS selected action:", best_act)
-    state, reward, done, _, afterstate = env.step(best_act)
-    # env.render(action=best_act)
-    print("best_act", best_act)
-    print("reward", reward)
+    # print("TD-MCTS selected action:", best_act)
+    # state, reward, done, _, afterstate = env.step(best_act)
+    # # env.render(action=best_act)
+    # print("best_act", best_act)
+    # print("reward", reward)
     
     return best_act
 
