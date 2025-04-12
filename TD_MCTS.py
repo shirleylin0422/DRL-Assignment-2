@@ -70,16 +70,16 @@ def rollout_loop_jit(board, score, depth, gamma):
     discount = 1.0
     current_board = board.copy()
     current_score = score 
+    new_afterstate = current_board.copy()
+    done = False
 
     for d in range(depth):
         action = select_random_legal_move(current_board)
         if action == -1:
             break
-        for a in range(4):
-            if is_move_legal_jit(board, a):
-                next_board, new_score, done, _, new_afterstate = step_jit(current_board, current_score, action)
-                reward = new_score - current_score
-                rollout_reward += discount * reward 
+        next_board, new_score, done, _, new_afterstate = step_jit(current_board, current_score, action)
+        reward = new_score - current_score
+        rollout_reward += discount * reward 
         discount *= gamma
         current_board = next_board.copy()
         current_score = new_score
@@ -181,11 +181,11 @@ class TD_MCTS:
         # TODO: Use the approximator to evaluate the final state.
 
         if isinstance(node, PlayerNode):
+            rollout_reward = 0
 
             """approximator rollout"""
             best_value = float('-inf')
             has_legal_mv, legal_actions = node.if_legal_actions()
-            rollout_reward = 0
             if has_legal_mv:
                 for a in legal_actions:
                     next_board, new_score, done, _, new_afterstate = step_jit(node.state.copy(), node.score, a)
@@ -197,27 +197,32 @@ class TD_MCTS:
                 rollout_reward = best_value
             
             """random rollout"""
-            # sim_env = self.create_env_from_state(node.state.copy(), node.score)
-            # rollout_reward = 0
-            # for i in range(rollout_depth):
-            #     legal_moves = [a for a in range(4) if is_move_legal_jit(sim_env.board, a)]
-            #     if not legal_moves:
-            #         break
-
-            #     a = random.choice(legal_moves)
-            #     new_state, new_score, done, _, new_afterstate = step_jit(node.state.copy(), node.score, a)
-            #     reward = new_score - sim_env.score
-            #     rollout_reward += reward + self.approximator.value(new_afterstate)
-            #     sim_env = self.create_env_from_state(new_state, new_score)
-            #     if done:
-            #         break
-                
-            
-
-
+            # best_value = float('-inf')
+            # has_legal_mv, legal_actions = node.if_legal_actions()
+            # reward = 0
+            # action_values = []
+            # random_rollout_times = 10
+            # if has_legal_mv:
+            #     for a in legal_actions:
+            #         next_state, new_score, done, _, afterstate = step_jit(node.state.copy(), node.score, a)
+            #         reward = new_score - node.score
+            #         total = 0.0
+            #         for i in range(random_rollout_times):
+            #             random_rollout_reward, discount, afterstate = rollout_loop_jit(next_state.copy(), new_score, rollout_depth, self.gamma)
+            #             if afterstate is not None:
+            #                 total  += random_rollout_reward + discount*self.approximator.value(afterstate)
+            #             else:
+            #                 total += random_rollout_reward
+                    
+            #         avg_val  = total / random_rollout_times + reward
+            #         action_values.append(avg_val)
+            # if len(action_values)!=0:
+            #     rollout_reward = sum(action_values) / len(action_values)
 
         elif isinstance(node, ChanceNode):
             rollout_reward = self.approximator.value(node.state)
+        else:
+            rollout_reward = 0.0
 
     
         return rollout_reward
